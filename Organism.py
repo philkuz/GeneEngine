@@ -38,7 +38,7 @@ class Organism:
 		else:
 			self.gene = genotype
 	def isMHC(self):
-		if self.gene[0] = 0:
+		if self.gene[0] == 0:
 			return False
 		else: 
 			return True
@@ -68,9 +68,14 @@ class Organism:
 						locus=str((int(locus)+1)%2)
 					op+=locus
 				genotype.append(op)
+			prCt = 0
 			for specie in self.parasites:
 				#potential problems if self.parasites has a specie with 0 individuals
-				parasites.append([specie[random.randint(0,len(specie)-1)]])
+				if len(specie) > 0:
+					parasites.append([specie[random.randint(0,len(specie)-1)]])
+				else:
+					parasites.append([Parasite(Organism.defLoci, prCt)])
+				prCt += 1
 		else:
 			#asexual reproduction where only mutation is a factor
 			for i in range(0,len(par1G)):
@@ -87,6 +92,9 @@ class Organism:
 		child = Organism(genotype, parasites)
 		child.loaded = True
 		child.parents = parents
+		child.loci = self.loci
+		child.species = self.species
+		child.age = 0
 		return child
 	def details(self):
 		#print "Loci: "+ str(self.loci)
@@ -117,15 +125,21 @@ class Organism:
 			for individual in self.parasites[specie]:
 				score += individual.getscore(self, specie+1)
 		return self.parasiteCount()*self.loci-score
-
+	def getMate(self):
+		return self.mate
 	def setMate(self, organism):
 		self.mate = organism
+	def canMate(self):
+		if self.age < 14:
+			return False
+		else:
+			return True
 	def parasiteCount(self):
 		count = 0
 		for specie in range(0, len(self.parasites)):
 			count += len(self.parasites[specie])
 		return count
-	def removeParasite(self, parasite, species = None):
+	def removeParasite(self, parasite, species):
 		self.parasites[species].remove(parasite)
 	def newYear(self):
 		#parasite reproduction handling

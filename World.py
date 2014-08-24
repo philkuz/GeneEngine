@@ -63,55 +63,86 @@ class World:
 			tempOrgs.remove(output)
 	'''
 	def mating(self):
-		tempOrgs = random.shuffle(self.organisms)
+		tempOrgs = list(self.organisms)
 		opOrgs = []
 		mhcThreshhold = int(.7 * tempOrgs[0].loci*tempOrgs[0].species)
 		while(len(tempOrgs) > 0):
 			cur = tempOrgs[0]
+			#eliminates juveniles from teh breeding pool
+			if not cur.canMate():
+				opOrgs.append(cur)
+				tempOrgs.remove(cur)
+				continue
 			output = None
 			if cur.isMHC():
 				highScore = 0
+				#cycles through remaining organisms
+				offset = 0
 				for i in range(1, len(tempOrgs)):
-					curScore = cur.mhcScore(tempOrgs[i])
+					tempOrganism = tempOrgs[i-offset]
+					#eliminates juveniles from the breeding pool
+					if not tempOrganism.canMate():
+						opOrgs.append(tempOrganism)
+						tempOrgs.remove(tempOrganism)
+						offset+=1
+						continue
+					#compares score to current high score and saves the highest organism; ends loop if it passes threshold.
+					curScore = cur.mhcScore(tempOrganism)
+					if output is None:
+						output = tempOrganism
 					if curScore > highScore:
 						highScore = curScore
-						output = tempOrgs[i]
-					if curScore >= mhcThreshold:
+						output = tempOrganism
+					if curScore >= mhcThreshhold:
 						break
-				else:
-					output = tempOrgs[len(tempOrgs)-1]
 			else:
-				output = tempOrgs[random.randint(0,len(tempOrgs)-1)]
-			cur.setMate(output)
-			output.setMate(cur)
+				output = tempOrgs[random.randint(1,len(tempOrgs)-1)]
+				while (not output.canMate()) and len(tempOrgs) > 0:
+					opOrgs.append(output)
+					tempOrgs.remove(output)
+					output = tempOrgs[random.reandint(1, len(tempOrgs)-1)]
+				if not output.canMate():
+					output = None
+			
 			opOrgs.append(cur)
-			opOrgs.append(output)
-			tempOrgs.remove(cur)
-			tempOrgs.remove(output)
-		self.organisms = list(tempOrgs)
-	'''
+			tempOrgs.remove(cur) 
+			if output is not cur and output is not None:
+				cur.setMate(output)
+				output.setMate(cur)
+				opOrgs.append(output)
+				tempOrgs.remove(output)
+		self.organisms = opOrgs[:]
+		for i in range(0, int(len(opOrgs)*Organism.fertilityRate)):
+			if len(opOrgs) == 0:
+				break
+			curOrganism = opOrgs[random.randint(0, len(opOrgs)-1)]
+			quit = False
+			while curOrganism.mate is None and len(opOrgs) > 0:
+				opOrgs.remove(curOrganism)
+				if len(opOrgs) == 0:
+					quit = True
+					break
+				curOrganism = opOrgs[random.randint(0, len(opOrgs)-1)]
+			if quit:
+				break
+			child = curOrganism.reproduce(curOrganism.mate)
+			opOrgs.remove(curOrganism)
+			self.organisms.append(child)
+
+
+
+	
 	def checkMates(self):
 		for x in self.organisms:
 			print x.details()
 			print x.mhcScore(x.mate)
 			print x.mate.details()
 	def newYear(self):
-		order = []
 		for organism in self.organisms:
 			organism.newYear()
-			if len(order) == 0:
-				order.append(organism)
-			else:
-				for x in range(0, len(order)):
-					if order[x].parasiteScore() > organism.parasiteScore():
-						order.insert(x, organism)
-						break;
-					elif x == len(order) - 1:
-						order.append(organism)
-		order = order[int(len(order)*Organism.deathRate):]
-
+			
 		parasiteCount = 0
-		for organism in order:
+		for organism in self.organisms:
 			parasiteCount += organism.parasiteCount()
 		print parasiteCount,; print ", ",
 		#random parasite elimination: ignored because it selects out the ideal forms of genes too quickly
@@ -141,10 +172,12 @@ class World:
 			parasiteCount += organism.parasiteCount()
 		print parasiteCount
 		'''
+		#ranked parasite elimination, but with randomized selection of the often repeated ranks
 		zeros = []
 		ones = []
 		twos = [] 
 		threes = []
+		order = self.organisms[:]
 		for orgCt in range(0,len(order)):
 			organism = order[orgCt]
 			for count in range (1,len(organism.parasites)+1):
@@ -187,6 +220,24 @@ class World:
 		for organism in order:
 			parasiteCount += organism.parasiteCount()
 		print parasiteCount
+		order = []
+		print "Organisms:",; print len(self.organisms),
+		for organism in self.organisms:
+			if len(order) == 0:
+					order.append(organism)
+			else:
+				for x in range(0, len(order)):
+					if order[x].parasiteScore() > organism.parasiteScore():
+						order.insert(x, organism)
+						break;
+					elif x == len(order) - 1:
+						order.append(organism)
+		order = order[int(len(order)*Organism.deathRate):]
+		self.organisms = order[:]
+		print len(self.organisms),
+		self.mating()
+		print len(self.organisms)
+
 cx = World(250)
-for i in range(0,30):
+for i in range(0,1000):
 	cx.newYear()

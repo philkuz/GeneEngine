@@ -1,12 +1,11 @@
 import random
 
 class Parasite:
-	mutationRate = 0.01
+	mutationRate = 0.5
 	deathRate = 1/1.1
 	def __init__(self, k, n, genot = None):
 		self.loci = k
   		self.iD = n
-		self.score = 0
 		self.genotype = ""
 		self.hostyear = 0
 		self.score = -1
@@ -46,9 +45,12 @@ class Parasite:
 		print self.genotype
 		print "Loci: "+ str(self.loci)
 		print "ID: "+ str(self.iD)
+	#outdated method: death now handled by World.py
+	'''
 	def death(self):
 		if random.random() < deathRate:
 			return True
 		else:
 			return False
 
+'''
