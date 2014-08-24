@@ -1,84 +1,192 @@
 import random
+import sys
 from Parasite import Parasite
-class Organism:
-	defLoci = 3
-	defPars = 3
-	defSex = 1
-	def __init__(self, par1 = None, par2 = None):
-		self.parents = []
-		self.mutation = 0.01
-		#check if it has any parents, otherwise considered novel)
-		if par1 is not None:
-			self.parents.append(par1)
-			self.loaded = True
-			self.loci = par1.loci
-			self.parspecs = par1.parspecs
-			self.gene = [par1.gene[0]]
-			par1G = par1.gene
-			#check for 2 parents
-			if par2 is not None:
-				if par1.gene[0] is not "1" or par2.gene[0]:
-					print "Error in parentage, one parent is asexual, not sexual"
-				self.parents.append(par2)
-				par2G = par2.gene
-				for i in range(1,len(par1G)):
-					cur1 = par1G[i]
-					cur2 = par2G[i]
-					op = ""
-					for j in range(0,par1.loci):
-						par = random.randint(0,1)
-						car = ""
-						if par == 0:
-							car=cur1[j]
-						elif par == 1:
-							car=cur2[j]
-						if random.random() < self.mutation:
-							car=str((int(car)+1)%2)
-						op+=car
-					self.gene.append(op)
+from Organism import Organism
+class World:
+	parasiteCount = 0
+	organismCount = 0
+	distrib = []
+	for i in range(0,Organism.defLoci*Organism.defPars+1):
+		distrib.append(0) 
+	def __init__(self, size, mhcAsrt = None):
+		self.organisms = []
+		self.mhc = mhcAsrt or False
+		for i in range(0, size):
+			self.organisms.append(Organism())
+	#depreciated reproduction models
+	'''
+	def urmate_MHC(self):
+		tempOrgs = list(self.organisms)
+		opOrgs = []
+		while(len(tempOrgs) > 0):
+			cur = tempOrgs[0]
+			highScore = 0
+			output = None
+			for i in range(1, len(tempOrgs)):
+				curScore = cur.mhcScore(tempOrgs[i])
+				if curScore > highScore:
+					highScore = curScore
+					output = tempOrgs[i]
+			if output is None:
+				output = tempOrgs[len(tempOrgs)-1]
+			World.distrib[highScore]+=1
+			cur.setMate(output)
+			output.setMate(cur)
+			opOrgs.append(cur)
+			opOrgs.append(output)
+			tempOrgs.remove(cur)
+			tempOrgs.remove(output)
+		self.organisms = list(opOrgs)
+	def mate_MHC(self):
+		tempOrgs = list(self.organisms)
+		opOrgs = []
+		threshold = 6
+		while(len(tempOrgs) > 0):
+			cur = tempOrgs[0]
+			highScore = 0
+			output = None
+			for i in range(1, len(tempOrgs)):
+				curScore = cur.mhcScore(tempOrgs[i])
+				if curScore > highScore:
+					highScore = curScore
+					output = tempOrgs[i]
+				if curScore >= threshold:
+					break
+			if output is None:
+				output = tempOrgs[len(tempOrgs)-1]
+			World.distrib[highScore]+=1
+			cur.setMate(output)
+			output.setMate(cur)
+			opOrgs.append(cur)
+			opOrgs.append(output)
+			tempOrgs.remove(cur)
+			tempOrgs.remove(output)
+	'''
+	def mating(self):
+		tempOrgs = random.shuffle(self.organisms)
+		opOrgs = []
+		mhcThreshhold = int(.7 * tempOrgs[0].loci*tempOrgs[0].species)
+		while(len(tempOrgs) > 0):
+			cur = tempOrgs[0]
+			output = None
+			if cur.isMHC():
+				highScore = 0
+				for i in range(1, len(tempOrgs)):
+					curScore = cur.mhcScore(tempOrgs[i])
+					if curScore > highScore:
+						highScore = curScore
+						output = tempOrgs[i]
+					if curScore >= mhcThreshold:
+						break
+				else:
+					output = tempOrgs[len(tempOrgs)-1]
 			else:
-				if par1.gene[0] is not "0":
-					print "Error in parentage, parent 1 is sexual, not asexual"
-				for i in range(1,len(par1G)):
-					cur = par1G[i]
-					op=""
-					for j in cur:
-						car = j 
-						if random.random() < self.mutation:
-							car=str((int(j)+1)%2)
-						op+=car
-					self.gene.append(op)
-		else:
-			self.new(Organism.defPars, Organism.defLoci, Organism.defSex)
-	def new(self, n, k, sex):
-		self.loaded = True
-		self.loci = k
-		self.parspecs = n
-		self.gene = [str(sex)]
-		for i in range(0,n):
-			cur = ""
-			for j in range(0,k):
-				cur += str(random.randint(0,1))
-			self.gene.append(cur)
-	def details(self):
-		#print "Loci: "+ str(self.loci)
-		#print "Parasite Species: "+str(self.parspecs)
-		print "Genotype: "+ str(self.gene)
-		for i in range(0,len(self.parents)):
-			print "Parent"+str(i)+": "+str(self.parents[i].gene)
+				output = tempOrgs[random.randint(0,len(tempOrgs)-1)]
+			cur.setMate(output)
+			output.setMate(cur)
+			opOrgs.append(cur)
+			opOrgs.append(output)
+			tempOrgs.remove(cur)
+			tempOrgs.remove(output)
+		self.organisms = list(tempOrgs)
+	'''
+	def checkMates(self):
+		for x in self.organisms:
+			print x.details()
+			print x.mhcScore(x.mate)
+			print x.mate.details()
+	def newYear(self):
+		order = []
+		for organism in self.organisms:
+			organism.newYear()
+			if len(order) == 0:
+				order.append(organism)
+			else:
+				for x in range(0, len(order)):
+					if order[x].parasiteScore() > organism.parasiteScore():
+						order.insert(x, organism)
+						break;
+					elif x == len(order) - 1:
+						order.append(organism)
+		order = order[int(len(order)*Organism.deathRate):]
 
-cx = Organism()
-cw = Organism()
-cy = Organism(cx)
-cz = Organism(cx,cy)
-cv = Organism(cw,cx)
-print "Org1"
-cx.details()
-print "Org2"
-cy.details()
-print "Org3"
-cz.details()
-print "CW"
-cw.details()
-print "CV"
-cv.details()
+		parasiteCount = 0
+		for organism in order:
+			parasiteCount += organism.parasiteCount()
+		print parasiteCount,; print ", ",
+		#random parasite elimination: ignored because it selects out the ideal forms of genes too quickly
+		'''
+		for i in range(0,int(parasiteCount*Parasite.deathRate)):
+			organismsLeft = range(0,len(order))
+			index = random.randint(0,len(organismsLeft)-1)
+			organism = order[organismsLeft[index]]
+			organismsLeft.pop(index)
+			tempIndex = random.randint(0,organism.species-1)
+			count = 0 
+			speciesLeft = range(0,organism.species)
+			while len(organism.parasites[tempIndex]) == 0:
+				if len(speciesLeft) == 0:
+					index = random.randint(0,len(organismsLeft)-1)
+					organism = order[organismsLeft[index]]
+					organismsLeft.pop(index)
+					speciesLeft = range(0, organism.species)
+					continue
+				tempIndex = speciesLeft[random.randint(0,len(speciesLeft)-1)]
+				speciesLeft.remove(tempIndex)
+				
+			specie = organism.parasites[tempIndex]
+			specie.remove(specie[random.randint(0,len(specie)-1)])
+		parasiteCount = 0
+		for organism in order:
+			parasiteCount += organism.parasiteCount()
+		print parasiteCount
+		'''
+		zeros = []
+		ones = []
+		twos = [] 
+		threes = []
+		for orgCt in range(0,len(order)):
+			organism = order[orgCt]
+			for count in range (1,len(organism.parasites)+1):
+				species = organism.parasites[count-1]
+				for psiteCt in range(0,len(species)):
+					parasite = species[psiteCt]
+					score = parasite.getscore(organism, count)
+					if score == 0:
+						zeros.append([parasite, count, orgCt])
+					elif score == 1:
+						ones.append([parasite, count, orgCt])
+					elif score == 2:
+						twos.append([parasite, count, orgCt])
+					elif score == 3:
+						threes.append([parasite, count, orgCt])
+				count+=1
+		nums = [zeros, ones, twos, threes]
+		deadSites = int(parasiteCount*Parasite.deathRate)
+		while(deadSites > 0):
+			numsIdx = 0
+			while(len(nums[numsIdx])==0):
+				numsIdx+=1
+				if numsIdx > 3:
+					print "greater than threes"
+			#IE zeros
+			curList = nums[numsIdx]
+			#returns the parasite currently working with
+			curParasite = curList.pop(random.randint(0,len(curList)-1))
+			organism = order[curParasite[2]]
+			species = organism.parasites[curParasite[1]-1]
+			for parasite in species:
+				if parasite.genotype == curParasite[0].genotype:
+					species.remove(parasite)
+					deadSites-=1
+					break;
+			else:
+				print "fail"
+			
+		parasiteCount = 0
+		for organism in order:
+			parasiteCount += organism.parasiteCount()
+		print parasiteCount
+cx = World(250)
+for i in range(0,30):
+	cx.newYear()
