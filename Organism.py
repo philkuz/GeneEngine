@@ -8,13 +8,15 @@ class Organism:
 	deathRate = 1.0/ (juvPeriod+1)
 	fertilityRate = deathRate / ((1-deathRate)**(juvPeriod+1))
 	mutationRate = 0.01
-	def __init__(self, genotype = None, parasites = None):
+	def __init__(self, mhc = None, genotype = None, parasites = None):
 		self.parents = []
 		self.parasites = []
 		self.mate = None
 		self.age = 0
+		if mhc is None:
+			mhc = random.randint(0,1)
 		if genotype is None:
-			self.new(random.randint(0,1),Organism.defPars, Organism.defLoci)
+			self.new(mhc,Organism.defPars, Organism.defLoci)
 		else:
 			self.gene = genotype
 		if parasites is None:
@@ -30,6 +32,7 @@ class Organism:
 		self.age = 14
 		if genotype is None:
 			self.gene = [str(mhc)]
+			
 			for i in range(0,n):
 				cur = ""
 				for j in range(0,k):
@@ -38,10 +41,10 @@ class Organism:
 		else:
 			self.gene = genotype
 	def isMHC(self):
-		if self.gene[0] == 0:
-			return False
-		else: 
+		if self.gene[0] == str(1):
 			return True
+		else: 
+			return False
 	def reproduce(self, par2 = None):
 		parents = [self]
 		loaded = True
@@ -89,7 +92,7 @@ class Organism:
 				genotype.append(op)
 			#parasite handling done within the initializer
 			parasites = None
-		child = Organism(genotype, parasites)
+		child = Organism(None,genotype, parasites)
 		child.loaded = True
 		child.parents = parents
 		child.loci = self.loci

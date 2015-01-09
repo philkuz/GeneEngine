@@ -1,5 +1,6 @@
 import random
 import sys
+import os
 from Parasite import Parasite
 from Organism import Organism
 class World:
@@ -8,67 +9,24 @@ class World:
 	distrib = []
 	for i in range(0,Organism.defLoci*Organism.defPars+1):
 		distrib.append(0) 
-	def __init__(self, size, mhcAsrt = None):
+	def __init__(self, size, mhcAsrt = False):
 		self.organisms = []
-		self.mhc = mhcAsrt or False
-		for i in range(0, size):
-			self.organisms.append(Organism())
-	#depreciated reproduction models
-	'''
-	def urmate_MHC(self):
+		self.mhc = mhcAsrt
+		for i in range(0, size/2):
+			self.organisms.append(Organism(0))
+			self.organisms.append(Organism(1))
+		self.orgsFile = open('organisms.txt', 'w')
+		self.writeOrganisms("Year\tInit\tAfterDeath\tAfterBirth\tMHC\t")
+		self.paraFile = open('parasites.txt', 'w')
+		self.writeParasites("Year\tReproduce\tAlive")
+		self.year = 0
+	def mating(self, threshold = 0.4):
 		tempOrgs = list(self.organisms)
 		opOrgs = []
+		mhcThreshhold = int(threshold * tempOrgs[0].loci*tempOrgs[0].species)
 		while(len(tempOrgs) > 0):
 			cur = tempOrgs[0]
-			highScore = 0
-			output = None
-			for i in range(1, len(tempOrgs)):
-				curScore = cur.mhcScore(tempOrgs[i])
-				if curScore > highScore:
-					highScore = curScore
-					output = tempOrgs[i]
-			if output is None:
-				output = tempOrgs[len(tempOrgs)-1]
-			World.distrib[highScore]+=1
-			cur.setMate(output)
-			output.setMate(cur)
-			opOrgs.append(cur)
-			opOrgs.append(output)
-			tempOrgs.remove(cur)
-			tempOrgs.remove(output)
-		self.organisms = list(opOrgs)
-	def mate_MHC(self):
-		tempOrgs = list(self.organisms)
-		opOrgs = []
-		threshold = 6
-		while(len(tempOrgs) > 0):
-			cur = tempOrgs[0]
-			highScore = 0
-			output = None
-			for i in range(1, len(tempOrgs)):
-				curScore = cur.mhcScore(tempOrgs[i])
-				if curScore > highScore:
-					highScore = curScore
-					output = tempOrgs[i]
-				if curScore >= threshold:
-					break
-			if output is None:
-				output = tempOrgs[len(tempOrgs)-1]
-			World.distrib[highScore]+=1
-			cur.setMate(output)
-			output.setMate(cur)
-			opOrgs.append(cur)
-			opOrgs.append(output)
-			tempOrgs.remove(cur)
-			tempOrgs.remove(output)
-	'''
-	def mating(self):
-		tempOrgs = list(self.organisms)
-		opOrgs = []
-		mhcThreshhold = int(.7 * tempOrgs[0].loci*tempOrgs[0].species)
-		while(len(tempOrgs) > 0):
-			cur = tempOrgs[0]
-			#eliminates juveniles from teh breeding pool
+			#eliminates juveniles from the breeding pool
 			if not cur.canMate():
 				opOrgs.append(cur)
 				tempOrgs.remove(cur)
@@ -96,14 +54,17 @@ class World:
 					if curScore >= mhcThreshhold:
 						break
 			else:
-				output = tempOrgs[random.randint(1,len(tempOrgs)-1)]
-				while (not output.canMate()) and len(tempOrgs) > 0:
-					opOrgs.append(output)
-					tempOrgs.remove(output)
-					output = tempOrgs[random.reandint(1, len(tempOrgs)-1)]
-				if not output.canMate():
-					output = None
-			
+				#output is either novel or cur. If it is cur, then output.canMate() should be true, and would be handled later
+				if len(tempOrgs) > 1:
+					output = tempOrgs[random.randint(1, len(tempOrgs)-1)]
+					while not output.canMate():
+						opOrgs.append(output)
+						tempOrgs.remove(output)
+						if len(tempOrgs) > 0:
+							output = None
+							break
+						else:
+							output = tempOrgs[random.randint(1, len(tempOrgs)-1)]			
 			opOrgs.append(cur)
 			tempOrgs.remove(cur) 
 			if output is not cur and output is not None:
@@ -128,50 +89,39 @@ class World:
 			child = curOrganism.reproduce(curOrganism.mate)
 			opOrgs.remove(curOrganism)
 			self.organisms.append(child)
-
-
-
-	
 	def checkMates(self):
 		for x in self.organisms:
 			print x.details()
 			print x.mhcScore(x.mate)
 			print x.mate.details()
-	def newYear(self):
+	def writeOrganisms(self, string, newLine = False):
+		if newLine:
+			string = "\n"+string
+		
+		self.orgsFile.write(string+"\t")
+	def writeParasites(self, string, newLine = False):
+		if newLine:
+			string = "\n"+string
+		
+		self.paraFile.write(string+"\t")
+	def countMHC(self):
+		count = 0
+		for organism in self.organisms:
+			if organism.isMHC():
+				count+=1
+		return count
+	def newYear(self, threshold = 0.4):
+		self.writeOrganisms(str(self.year), True)
+		self.writeParasites(str(self.year), True)
+		print self.year,
 		for organism in self.organisms:
 			organism.newYear()
 			
 		parasiteCount = 0
 		for organism in self.organisms:
 			parasiteCount += organism.parasiteCount()
-		print parasiteCount,; print ", ",
-		#random parasite elimination: ignored because it selects out the ideal forms of genes too quickly
-		'''
-		for i in range(0,int(parasiteCount*Parasite.deathRate)):
-			organismsLeft = range(0,len(order))
-			index = random.randint(0,len(organismsLeft)-1)
-			organism = order[organismsLeft[index]]
-			organismsLeft.pop(index)
-			tempIndex = random.randint(0,organism.species-1)
-			count = 0 
-			speciesLeft = range(0,organism.species)
-			while len(organism.parasites[tempIndex]) == 0:
-				if len(speciesLeft) == 0:
-					index = random.randint(0,len(organismsLeft)-1)
-					organism = order[organismsLeft[index]]
-					organismsLeft.pop(index)
-					speciesLeft = range(0, organism.species)
-					continue
-				tempIndex = speciesLeft[random.randint(0,len(speciesLeft)-1)]
-				speciesLeft.remove(tempIndex)
-				
-			specie = organism.parasites[tempIndex]
-			specie.remove(specie[random.randint(0,len(specie)-1)])
-		parasiteCount = 0
-		for organism in order:
-			parasiteCount += organism.parasiteCount()
-		print parasiteCount
-		'''
+		self.writeParasites(str(parasiteCount))
+		#print str(parasiteCount),
 		#ranked parasite elimination, but with randomized selection of the often repeated ranks
 		zeros = []
 		ones = []
@@ -219,9 +169,12 @@ class World:
 		parasiteCount = 0
 		for organism in order:
 			parasiteCount += organism.parasiteCount()
-		print parasiteCount
+		#print str(parasiteCount),
+		self.writeParasites(str(parasiteCount))
 		order = []
-		print "Organisms:",; print len(self.organisms),
+		
+		self.writeOrganisms(str(len(self.organisms)))
+		#print str(len(self.organisms)),
 		for organism in self.organisms:
 			if len(order) == 0:
 					order.append(organism)
@@ -234,10 +187,22 @@ class World:
 						order.append(organism)
 		order = order[int(len(order)*Organism.deathRate):]
 		self.organisms = order[:]
-		print len(self.organisms),
-		self.mating()
-		print len(self.organisms)
+		#print str(len(self.organisms)),
+		self.writeOrganisms(str(len(self.organisms)))
+		self.mating(threshold)
+		#print str(len(self.organisms)),; print str(self.countMHC())
+		self.writeOrganisms(str(len(self.organisms)))
+		self.writeOrganisms(str(self.countMHC()))
+		
+		self.year += 1
 
 cx = World(250)
-for i in range(0,1000):
-	cx.newYear()
+for j in range(3,7):
+	threshold = j*0.1
+	for k in range(0,5):
+		if j == 4 and k == 0:
+			continue
+		for i in range(0,500):
+			cx.newYear(threshold)
+		os.rename("organisms.txt", "orgs0"+str(j)+"_"+"0"+str(k))
+		os.rename("parasites.txt", "pars0"+str(j)+"_"+"0"+str(k))
