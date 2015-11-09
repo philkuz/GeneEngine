@@ -5,13 +5,14 @@ from parasite import Parasite
 from organism import Organism
 
 class World:
-	""" The "environment" of the simulation. Contains all controls
+	"""
+	The "environment" of the simulation. Contains all controls
 	for managing mating, parasite generation etc.
 	"""
 	parasiteCount = 0
 	organismCount = 0
 	distrib = []
-	for i in range(0, Organism.defLoci*Organism.defPars+1):
+	for i in range(0, Organism.loci*Organism.species+1):
 		distrib.append(0)
 	def __init__(self, size, mhcAsrt = False):
 		self.organisms = []
@@ -36,7 +37,7 @@ class World:
 				tempOrgs.remove(cur)
 				continue
 			output = None
-			if cur.isMHC():
+			if cur.is_mhc():
 				highScore = 0
 				#cycles through remaining organisms
 				offset = 0
@@ -111,7 +112,7 @@ class World:
 	def countMHC(self):
 		count = 0
 		for organism in self.organisms:
-			if organism.isMHC():
+			if organism.is_mhc():
 				count+=1
 		return count
 	def newYear(self, threshold = 0.4):

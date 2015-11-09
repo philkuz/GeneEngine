@@ -38,7 +38,7 @@ class Parasite:
 			return self.score
 		else:
 			org_sequence = organism.gene[specie]
-			assert len(genot) == self.loci, "mismatched loci size"
+			assert len(org_sequence) == self.loci, "Mismatched loci size"
 			score = 0
 			# make this into a dot product
 			for i in range(0, self.loci):
@@ -48,7 +48,7 @@ class Parasite:
 			return self.score
 	def reproduce(self, score):
 		'''
-		Method that causes the parasite to produce 2^score offspring
+		Method that manages a single reproduction of a parasite to produce 2^score offspring
 
 		Args:
 		score  (integer) : the fitness score of this parasite
@@ -57,11 +57,11 @@ class Parasite:
 		output = []
 		for _ in range(num_offspring):
 			new_genotype = ""
-			for loci in self.genotype:
+			for sequence in self.genotype:
 				if random.random() < self.mutation_rate:
-					new_genotype += str((int(loci)+1)%2)
+					new_genotype += str((int(sequence)+1)%2)
 				else:
-					new_genotype += loci
+					new_genotype += sequence
 			child = Parasite(self.loci, self.id, new_genotype)
 			output.append(child)
 		return output

@@ -1,14 +1,28 @@
 import random
 from parasite import Parasite
 class Organism:
-	defLoci = 3
-	defPars = 6
-	defSex = 1
-	juvPeriod = 13.0
-	death_rate = 1.0/ (juvPeriod+1)
-	fertilityRate = death_rate / ((1-death_rate)**(juvPeriod+1))
+	'''
+	Organism class that encompasess all of the Host functions
+	'''
+	loci = 3
+	num_parasites = 6
+	species = 6
+	juvenile_period = 13.0
+	death_rate = 1.0/ (juvenile_period+1)
+	fertility_rate = death_rate / ((1-death_rate)**(juvenile_period+1))
 	mutation_rate = 0.01
 	def __init__(self, mhc = None, genotype = None, parasites = None):
+		'''
+		Args:
+		mhc (integer) : binary flag that is 0 if the Organism selects mates randomly and 1 if
+		the organism selects mates based on their genomic sequence (simulated MHC)
+
+		genotype (list) : a list of species length that contains strings each with a length of
+		loci
+
+		parasites (list) : a list of the parasites that use this organism as a host. If None, then
+		new parasites are generated
+		'''
 		self.parents = []
 		self.parasites = []
 		self.mate = None
@@ -16,49 +30,64 @@ class Organism:
 		if mhc is None:
 			mhc = random.randint(0,1)
 		if genotype is None:
-			self.new(mhc,Organism.defPars, Organism.defLoci)
+			self.new(mhc)
 		else:
 			self.gene = genotype
 		if parasites is None:
-			for prCt in range(0,Organism.defPars):
-				self.parasites.append([Parasite(Organism.defLoci, prCt)])
+			for prCt in range(0,self.species):
+				self.parasites.append([Parasite(self.loci, prCt)])
 		else:
 			self.parasites = parasites
 
-	def new(self, mhc, n, k, genotype = None):
+	def new(self, mhc, genotype = None):
+		'''
+		Initializes "self" to an adult Organism
+
+		Args:
+		mhc (integer) : the binary flag of whether this organism selects mates
+		randomly (0) or whether selecting by MHC sequence (1)
+
+		genotype (list) : a list of species length that contains strings each with a length of
+		loci
+		'''
 		self.loaded = True
-		self.loci = k
-		self.species = n
-		self.age = 14
+		self.age = self.juvenile_period + 1
 		if genotype is None:
 			self.gene = [str(mhc)]
 
-			for i in range(0,n):
+			for i in range(0,self.species):
 				cur = ""
-				for j in range(0,k):
+				for j in range(0,self.loci):
 					cur += str(random.randint(0,1))
 				self.gene.append(cur)
 		else:
 			self.gene = genotype
-	def isMHC(self):
+	def is_mhc(self):
+		'''
+		Abstraction that returns whether this Organism selects for MHC sequence or not
+		'''
 		if self.gene[0] == str(1):
 			return True
 		else:
 			return False
 	def reproduce(self, par2 = None):
+		'''
+		Produces offspring based on gene sequence, an optional additional parent's
+		gene sequence, and any mutation that may happen along the way
+		'''
 		parents = [self]
 		loaded = True
 		genotype = []
-		par1G = self.gene
+		genotype1 = self.gene
 		parasites = []
 		#check for 2 parents
 		if par2 is not None:
 			#sexual reproduction where recombination as well as mutation occur
 			parents.append(par2)
-			par2G = par2.gene
-			for i in range(0,len(par1G)):
-				cur1 = par1G[i]
-				cur2 = par2G[i]
+			genotype2 = par2.gene
+			for i in range(0,len(genotype1)):
+				cur1 = genotype1[i]
+				cur2 = genotype2[i]
 				op = ""
 				for j in range(0,len(cur1)):
 					par = random.randint(0,1)
@@ -67,7 +96,7 @@ class Organism:
 						locus=cur1[j]
 					elif par == 1:
 						locus=cur2[j]
-					if random.random() < Organism.mutation_rate:
+					if random.random() < self.mutation_rate:
 						locus=str((int(locus)+1)%2)
 					op+=locus
 				genotype.append(op)
@@ -77,22 +106,22 @@ class Organism:
 				if len(specie) > 0:
 					parasites.append([specie[random.randint(0,len(specie)-1)]])
 				else:
-					parasites.append([Parasite(Organism.defLoci, prCt)])
+					parasites.append([Parasite(self.loci, prCt)])
 				prCt += 1
 		else:
 			#asexual reproduction where only mutation is a factor
-			for i in range(0,len(par1G)):
-				cur = par1G[i]
+			for i in range(0,len(genotype1)):
+				cur = genotype1[i]
 				op=""
 				for j in cur:
 					locus = j
-					if random.random() < Organism.mutation_rate:
+					if random.random() < self.mutation_rate:
 						locus=str((int(j)+1)%2)
 					op+=locus
-				genotype.append(op)
+				child_genotype.append(op)
 			#parasite handling done within the initializer
 			parasites = None
-		child = Organism(None,genotype, parasites)
+		child = Organism(None,child_genotype, parasites)
 		child.loaded = True
 		child.parents = parents
 		child.loci = self.loci
@@ -116,7 +145,7 @@ class Organism:
 		for i in range(1, len(self.gene)):
 			selfGene = self.gene[i]
 			orgGene = organism.gene[i]
-			for x in range(0,Organism.defLoci):
+			for x in range(0,self.loci):
 				if selfGene[x] != orgGene[x]:
 					score += 1
 		return score
@@ -127,13 +156,13 @@ class Organism:
 		for specie in range(0,len(self.parasites)):
 			for individual in self.parasites[specie]:
 				score += individual.get_score(self, specie+1)
-		return self.parasiteCount()*self.loci-score
+		return self.parasiteCount()*self.loci - score
 	def getMate(self):
 		return self.mate
 	def setMate(self, organism):
 		self.mate = organism
 	def canMate(self):
-		if self.age < 14:
+		if self.age <= self.juvenile_period:
 			return False
 		else:
 			return True
@@ -156,6 +185,6 @@ class Organism:
 				survivingSpecie.append(individual)
 			self.parasites[specie] = survivingSpecie
 		#child handling
-		if random.random() < Organism.fertilityRate and self.age > Organism.juvPeriod and self.mate is not None:
+		if random.random() < self.fertility_rate and self.age > self.juvenile_period and self.mate is not None:
 			self.reproduce(self.mate)
 		self.age += 1
