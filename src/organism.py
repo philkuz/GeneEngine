@@ -1,5 +1,5 @@
 import random
-from Parasite import Parasite
+from parasite import Parasite
 class Organism:
 	defLoci = 3
 	defPars = 6
@@ -24,7 +24,7 @@ class Organism:
 				self.parasites.append([Parasite(Organism.defLoci, prCt)])
 		else:
 			self.parasites = parasites
-		
+
 	def new(self, mhc, n, k, genotype = None):
 		self.loaded = True
 		self.loci = k
@@ -32,7 +32,7 @@ class Organism:
 		self.age = 14
 		if genotype is None:
 			self.gene = [str(mhc)]
-			
+
 			for i in range(0,n):
 				cur = ""
 				for j in range(0,k):
@@ -43,7 +43,7 @@ class Organism:
 	def isMHC(self):
 		if self.gene[0] == str(1):
 			return True
-		else: 
+		else:
 			return False
 	def reproduce(self, par2 = None):
 		parents = [self]
@@ -85,7 +85,7 @@ class Organism:
 				cur = par1G[i]
 				op=""
 				for j in cur:
-					locus = j 
+					locus = j
 					if random.random() < Organism.mutationRate:
 						locus=str((int(j)+1)%2)
 					op+=locus
@@ -105,7 +105,7 @@ class Organism:
 		for x in range(0,len(self.parasites)):
 			print str(x)+ "."
 			for y in self.parasites[x]:
-				print(y.genotype), 
+				print(y.genotype),
 			print ""
 		for i in range(0,len(self.parents)):
 			print "Parent"+str(i)+": "+str(self.parents[i].gene)

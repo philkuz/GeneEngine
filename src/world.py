@@ -1,14 +1,15 @@
 import random
 import sys
 import os
-from Parasite import Parasite
-from Organism import Organism
+from parasite import Parasite
+from organism import Organism
+
 class World:
 	parasiteCount = 0
 	organismCount = 0
 	distrib = []
-	for i in range(0,Organism.defLoci*Organism.defPars+1):
-		distrib.append(0) 
+	for i in range(0, Organism.defLoci*Organism.defPars+1):
+		distrib.append(0)
 	def __init__(self, size, mhcAsrt = False):
 		self.organisms = []
 		self.mhc = mhcAsrt
@@ -64,9 +65,9 @@ class World:
 							output = None
 							break
 						else:
-							output = tempOrgs[random.randint(1, len(tempOrgs)-1)]			
+							output = tempOrgs[random.randint(1, len(tempOrgs)-1)]
 			opOrgs.append(cur)
-			tempOrgs.remove(cur) 
+			tempOrgs.remove(cur)
 			if output is not cur and output is not None:
 				cur.setMate(output)
 				output.setMate(cur)
@@ -97,12 +98,12 @@ class World:
 	def writeOrganisms(self, string, newLine = False):
 		if newLine:
 			string = "\n"+string
-		
+
 		self.orgsFile.write(string+"\t")
 	def writeParasites(self, string, newLine = False):
 		if newLine:
 			string = "\n"+string
-		
+
 		self.paraFile.write(string+"\t")
 	def countMHC(self):
 		count = 0
@@ -116,7 +117,7 @@ class World:
 		print self.year,
 		for organism in self.organisms:
 			organism.newYear()
-			
+
 		parasiteCount = 0
 		for organism in self.organisms:
 			parasiteCount += organism.parasiteCount()
@@ -125,7 +126,7 @@ class World:
 		#ranked parasite elimination, but with randomized selection of the often repeated ranks
 		zeros = []
 		ones = []
-		twos = [] 
+		twos = []
 		threes = []
 		order = self.organisms[:]
 		for orgCt in range(0,len(order)):
@@ -165,14 +166,14 @@ class World:
 					break;
 			else:
 				print "fail"
-			
+
 		parasiteCount = 0
 		for organism in order:
 			parasiteCount += organism.parasiteCount()
 		#print str(parasiteCount),
 		self.writeParasites(str(parasiteCount))
 		order = []
-		
+
 		self.writeOrganisms(str(len(self.organisms)))
 		#print str(len(self.organisms)),
 		for organism in self.organisms:
@@ -193,7 +194,7 @@ class World:
 		#print str(len(self.organisms)),; print str(self.countMHC())
 		self.writeOrganisms(str(len(self.organisms)))
 		self.writeOrganisms(str(self.countMHC()))
-		
+
 		self.year += 1
 
 cx = World(250)
