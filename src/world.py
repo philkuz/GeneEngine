@@ -5,6 +5,9 @@ from parasite import Parasite
 from organism import Organism
 
 class World:
+	""" The "environment" of the simulation. Contains all controls
+	for managing mating, parasite generation etc.
+	"""
 	parasiteCount = 0
 	organismCount = 0
 	distrib = []
@@ -135,7 +138,7 @@ class World:
 				species = organism.parasites[count-1]
 				for psiteCt in range(0,len(species)):
 					parasite = species[psiteCt]
-					score = parasite.getscore(organism, count)
+					score = parasite.get_score(organism, count)
 					if score == 0:
 						zeros.append([parasite, count, orgCt])
 					elif score == 1:
@@ -146,7 +149,7 @@ class World:
 						threes.append([parasite, count, orgCt])
 				count+=1
 		nums = [zeros, ones, twos, threes]
-		deadSites = int(parasiteCount*Parasite.deathRate)
+		deadSites = int(parasiteCount*Parasite.death_rate)
 		while(deadSites > 0):
 			numsIdx = 0
 			while(len(nums[numsIdx])==0):
@@ -186,12 +189,12 @@ class World:
 						break;
 					elif x == len(order) - 1:
 						order.append(organism)
-		order = order[int(len(order)*Organism.deathRate):]
+		order = order[int(len(order)*Organism.death_rate):]
 		self.organisms = order[:]
-		#print str(len(self.organisms)),
+		print str(len(self.organisms)),
 		self.writeOrganisms(str(len(self.organisms)))
 		self.mating(threshold)
-		#print str(len(self.organisms)),; print str(self.countMHC())
+		print str(len(self.organisms)),; print str(self.countMHC())
 		self.writeOrganisms(str(len(self.organisms)))
 		self.writeOrganisms(str(self.countMHC()))
 

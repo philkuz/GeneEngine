@@ -5,9 +5,9 @@ class Organism:
 	defPars = 6
 	defSex = 1
 	juvPeriod = 13.0
-	deathRate = 1.0/ (juvPeriod+1)
-	fertilityRate = deathRate / ((1-deathRate)**(juvPeriod+1))
-	mutationRate = 0.01
+	death_rate = 1.0/ (juvPeriod+1)
+	fertilityRate = death_rate / ((1-death_rate)**(juvPeriod+1))
+	mutation_rate = 0.01
 	def __init__(self, mhc = None, genotype = None, parasites = None):
 		self.parents = []
 		self.parasites = []
@@ -67,7 +67,7 @@ class Organism:
 						locus=cur1[j]
 					elif par == 1:
 						locus=cur2[j]
-					if random.random() < Organism.mutationRate:
+					if random.random() < Organism.mutation_rate:
 						locus=str((int(locus)+1)%2)
 					op+=locus
 				genotype.append(op)
@@ -86,7 +86,7 @@ class Organism:
 				op=""
 				for j in cur:
 					locus = j
-					if random.random() < Organism.mutationRate:
+					if random.random() < Organism.mutation_rate:
 						locus=str((int(j)+1)%2)
 					op+=locus
 				genotype.append(op)
@@ -126,7 +126,7 @@ class Organism:
 		score = 0
 		for specie in range(0,len(self.parasites)):
 			for individual in self.parasites[specie]:
-				score += individual.getscore(self, specie+1)
+				score += individual.get_score(self, specie+1)
 		return self.parasiteCount()*self.loci-score
 	def getMate(self):
 		return self.mate
@@ -150,7 +150,7 @@ class Organism:
 			survivingSpecie = []
 			genomeLoc = specie + 1
 			for individual in self.parasites[specie]:
-				curChildren = individual.reproduce(individual.getscore(self, genomeLoc))
+				curChildren = individual.reproduce(individual.get_score(self, genomeLoc))
 				for child in curChildren:
 					survivingSpecie.append(child)
 				survivingSpecie.append(individual)
