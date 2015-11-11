@@ -22,6 +22,8 @@ class Parasite:
 		for i in range(0,k):
 			genotemp += str(random.randint(0,1))
 		self.genotype = genot or genotemp
+	def __repr__(self):
+		return self.genotype
 	def get_score(self, organism, specie):
 		'''
 		Method that returns the fitness score of this parasite in reference to the
@@ -70,6 +72,7 @@ class Parasite:
 		print "Loci: "+ str(self.loci)
 		print "ID: "+ str(self.id)
 	#outdated method: death now handled by World.py
+
 	'''
 	def death(self):
 		if random.random() < death_rate:

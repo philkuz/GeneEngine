@@ -2,7 +2,7 @@ import random
 from parasite import Parasite
 class Organism:
 	'''
-	Organism class that encompasess all of the Host functions
+	Organism class that encompasess all of the Host arguments and methods
 	'''
 	loci = 3
 	num_parasites = 6
@@ -22,6 +22,14 @@ class Organism:
 
 		parasites (list) : a list of the parasites that use this organism as a host. If None, then
 		new parasites are generated
+
+		Instance Variables:
+
+		parents (list)
+		parasites (list)
+		mate (Organism)
+		age (integer)
+		gene (list)
 		'''
 		self.parents = []
 		self.parasites = []
@@ -33,9 +41,10 @@ class Organism:
 			self.new(mhc)
 		else:
 			self.gene = genotype
+		# Generate new parasites or use the existing ones.
 		if parasites is None:
-			for prCt in range(0,self.species):
-				self.parasites.append([Parasite(self.loci, prCt)])
+			for specie in range(self.species):
+				self.parasites.append([Parasite(self.loci, specie)])
 		else:
 			self.parasites = parasites
 
@@ -70,10 +79,14 @@ class Organism:
 			return True
 		else:
 			return False
-	def reproduce(self, par2 = None):
+	def reproduce(self, parent2 = None):
 		'''
 		Produces offspring based on gene sequence, an optional additional parent's
 		gene sequence, and any mutation that may happen along the way
+
+		Args:
+		parent2 (Organism) : An optional Organism argument that marks the other
+		parent. If this is left out, reproduction is considered asexual.
 		'''
 		parents = [self]
 		loaded = True
@@ -81,21 +94,21 @@ class Organism:
 		genotype1 = self.gene
 		parasites = []
 		#check for 2 parents
-		if par2 is not None:
+		if parent2 is not None:
 			#sexual reproduction where recombination as well as mutation occur
-			parents.append(par2)
-			genotype2 = par2.gene
-			for i in range(0,len(genotype1)):
-				cur1 = genotype1[i]
-				cur2 = genotype2[i]
+			parents.append(parent2)
+			genotype2 = parent2.gene
+			for i in range(len(genotype1)):
+				sequence1 = genotype1[i]
+				sequence2 = genotype2[i]
 				op = ""
-				for j in range(0,len(cur1)):
+				for j in range(len(sequence1)):
 					par = random.randint(0,1)
 					locus = ""
 					if par == 0:
-						locus=cur1[j]
-					elif par == 1:
-						locus=cur2[j]
+						locus=sequence1[j]
+					else:
+						locus=sequence2[j]
 					if random.random() < self.mutation_rate:
 						locus=str((int(locus)+1)%2)
 					op+=locus
@@ -121,22 +134,43 @@ class Organism:
 				child_genotype.append(op)
 			#parasite handling done within the initializer
 			parasites = None
-		child = Organism(None,child_genotype, parasites)
+		child = Organism(None, child_genotype, parasites)
 		child.loaded = True
 		child.parents = parents
 		child.loci = self.loci
 		child.species = self.species
 		child.age = 0
 		return child
+	def __repr__(self):
+		'''
+		The string representation of this organism
+		'''
+		return self.parasite_genotypes()
+	def parasite_genotypes(self):
+		'''
+		Returns the genotype info of each parasite organized by specie
+
+		Returns (list) of lists that contain the parasite info in each
+		'''
+		output = []
+		for specie in self.parasites:
+			specie_genotypes = []
+			for individual in current_specie):
+				specie_genotypes.append(str(individual))
+			output.append(specie)
+		return output
 	def details(self):
-		#print "Loci: "+ str(self.loci)
-		#print "Parasite Species: "+str(self.species)
-		for x in range(0,len(self.parasites)):
-			print str(x)+ "."
+		'''
+		Prints the string representation of ht
+		'''
+		output = []
+		for x in range(len(self.parasites)):
+			cur_line = str(x)+ "."
+			# for each parasite in the species array
 			for y in self.parasites[x]:
 				print(y.genotype),
 			print ""
-		for i in range(0,len(self.parents)):
+		for i in range(len(self.parents)):
 			print "Parent"+str(i)+": "+str(self.parents[i].gene)
 		print "Genotype: "+ str(self.gene)
 	#Score system to determine diversity
