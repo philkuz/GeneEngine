@@ -1,5 +1,6 @@
 import random
 from parasite import Parasite
+
 class Organism:
 	'''
 	Organism class that encompasess all of the Host arguments and methods
@@ -11,6 +12,7 @@ class Organism:
 	death_rate = 1.0/ (juvenile_period+1)
 	fertility_rate = death_rate / ((1-death_rate)**(juvenile_period+1))
 	mutation_rate = 0.01
+
 	def __init__(self, mhc = None, genotype = None, parasites = None):
 		'''
 		Args:
@@ -90,7 +92,7 @@ class Organism:
 		'''
 		parents = [self]
 		loaded = True
-		genotype = []
+		child_genotype = []
 		genotype1 = self.gene
 		parasites = []
 		#check for 2 parents
@@ -112,7 +114,7 @@ class Organism:
 					if random.random() < self.mutation_rate:
 						locus=str((int(locus)+1)%2)
 					op+=locus
-				genotype.append(op)
+				child_genotype.append(op)
 			prCt = 0
 			for specie in self.parasites:
 				#potential problems if self.parasites has a specie with 0 individuals
@@ -155,7 +157,7 @@ class Organism:
 		output = []
 		for specie in self.parasites:
 			specie_genotypes = []
-			for individual in current_specie):
+			for individual in current_specie:
 				specie_genotypes.append(str(individual))
 			output.append(specie)
 		return output
