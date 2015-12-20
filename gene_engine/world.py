@@ -34,7 +34,7 @@ class World:
         while(len(tempOrgs) > 0):
             cur = tempOrgs[0]
             # eliminates juveniles from the breeding pool
-            if not cur.canMate():
+            if not cur.can_mate():
                 opOrgs.append(cur)
                 tempOrgs.remove(cur)
                 continue
@@ -46,7 +46,7 @@ class World:
                 for i in range(1, len(tempOrgs)):
                     tempOrganism = tempOrgs[i-offset]
                     # eliminates juveniles from the breeding pool
-                    if not tempOrganism.canMate():
+                    if not tempOrganism.can_mate():
                         opOrgs.append(tempOrganism)
                         tempOrgs.remove(tempOrganism)
                         offset += 1
@@ -63,10 +63,10 @@ class World:
                         break
             else:
                 # output is either novel or cur. If it is cur, then
-                # output.canMate() should be true, and would be handled later
+                # output.can_mate() should be true, and would be handled later
                 if len(tempOrgs) > 1:
                     output = tempOrgs[random.randint(1, len(tempOrgs)-1)]
-                    while not output.canMate():
+                    while not output.can_mate():
                         opOrgs.append(output)
                         tempOrgs.remove(output)
                         if len(tempOrgs) > 0:
@@ -79,8 +79,9 @@ class World:
             opOrgs.append(cur)
             tempOrgs.remove(cur)
             if output is not cur and output is not None:
-                cur.setMate(output)
-                output.setMate(cur)
+                cur.mate = output
+                output.mate = cur
+
                 opOrgs.append(output)
                 tempOrgs.remove(output)
         self.organisms = opOrgs[:]
@@ -131,7 +132,7 @@ class World:
         self.writeParasites(str(self.year), True)
         print self.year,
         for organism in self.organisms:
-            organism.newYear()
+            organism.new_year()
 
         parasiteCount = 0
         for organism in self.organisms:
@@ -218,6 +219,6 @@ if __name__ == "__main__":
             if j == 4 and k == 0:
                 continue
             for i in range(500):
-                cx.newYear(threshold)
+                cx.new_year(threshold)
             os.rename("organisms.txt", "orgs0"+str(j)+"_"+"0"+str(k))
             os.rename("parasites.txt", "pars0"+str(j)+"_"+"0"+str(k))

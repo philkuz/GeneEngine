@@ -1,3 +1,7 @@
+''' Parasite class
+This module handles all of the logic of Parasite objects.
+
+'''
 import random
 
 
@@ -16,16 +20,16 @@ class Parasite:
     def __init__(self, k, n, genot=None):
         self.loci = k
         self.id = n
-        self.genotype = ""
+        self.dna = ""
         self.hostyear = 0
         self.score = -1
         genotemp = ""
         for i in range(k):
             genotemp += str(random.randint(1))
-        self.genotype = genot or genotemp
+        self.dna = genot or genotemp
 
     def __repr__(self):
-        return self.genotype
+        return "Parasite({0})".format(self.dna)
 
     def get_score(self, organism, specie):
         '''
@@ -42,12 +46,12 @@ class Parasite:
         if organism.age == self.hostyear and self.score >= 0:
             return self.score
         else:
-            org_sequence = organism.gene[specie]
+            org_sequence = organism.dna[specie]
             assert len(org_sequence) == self.loci, "Mismatched loci size"
             score = 0
             # make this into a dot product
             for i in range(0, self.loci):
-                if self.genotype[i] == org_sequence[i]:
+                if self.dna[i] == org_sequence[i]:
                     score += 1
             self.score = score
             return self.score
@@ -64,7 +68,7 @@ class Parasite:
         output = []
         for _ in range(num_offspring):
             new_genotype = ""
-            for sequence in self.genotype:
+            for sequence in self.dna:
                 if random.random() < self.mutation_rate:
                     new_genotype += str((int(sequence)+1) % 2)
                 else:
@@ -74,9 +78,9 @@ class Parasite:
         return output
 
     def details(self):
-        print self.genotype
-        print "Loci: " + str(self.loci)
-        print "ID: " + str(self.id)
+        print (self.dna)
+        print( "Loci: " + str(self.loci))
+        print ("ID: " + str(self.id))
     # outdated method: death now handled by World.py
 
     '''
