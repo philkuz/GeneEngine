@@ -14,3 +14,5 @@ parasite_params = {
     "mutation_rate": 0.5,
     "death_rate": 1/1.1
 }
+def prob_std(p):
+    return (p*(1-p))**.5

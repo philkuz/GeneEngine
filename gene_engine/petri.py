@@ -3,34 +3,49 @@ import os
 from parasite import Parasite
 from organism import Organism
 
-
-class World:
-    """
-    The "environment" of the simulation. Contains all controls
-    for managing mating, parasite generation etc.
-    """
-    parasiteCount = 0
-    organismCount = 0
-    distrib = []
-    for i in range(0, Organism.loci*Organism.species+1):
-        distrib.append(0)
-
-    def __init__(self, size, mhcAsrt=False):
-        self.organisms = []
-        self.mhc = mhcAsrt
-        for i in range(0, size/2):
-            self.organisms.append(Organism(0))
-            self.organisms.append(Organism(1))
-        self.orgsFile = open('organisms.txt', 'w')
-        self.writeOrganisms("Year\tInit\tAfterDeath\tAfterBirth\tMHC\t")
-        self.paraFile = open('parasites.txt', 'w')
-        self.writeParasites("Year\tReproduce\tAlive")
+class Petri:
+    def __init__(self, population):
+        self.parasite_count = 0
+        self.organism_count = 0
         self.year = 0
+    def find_mates(self):
+        '''
+        Traverses the population of organisms and returns
+        a list 1 member from each mating pair
+        '''
+
+        unmated = self.organisms[:]
+        mated = []
+        while len(unmated) > 0:
+            candidate = unmated.pop(0)
+            if not cur.can_mate():
+                continue
+            shuffled_orgs = random.sample(unmated,len(unmated))
+            org = shuffled_orgs.pop(0)
+            while True:
+                if org.can_mate():
+                    if candidate.will_mate(org):
+                        candidate.mate = org
+                        unmated.remove(org)
+                        mated.append(candidate)
+                        break
+                else:
+                    unmated.remove(org)
+                org = shuffled_orgs.pop(0)
+        return mated
+    def incubator(self, mated):
+        '''
+        Takes in a list of 1 member from each mating pair and then
+        reproduces based on fertility_rate
+        '''
+        reproducing_mates = random.sample(mated, len(mated)*self.fertility_rate)
+        for mate in reproducing_mates:
+            mate.reproduce()
 
     def mating(self, threshold=0.4):
         tempOrgs = list(self.organisms)
         opOrgs = []
-        mhcThreshhold = int(threshold * tempOrgs[0].loci*tempOrgs[0].species)
+        mhcThreshhold = int(threshold * tempOrgs[0].loci_length*tempOrgs[0].num_species)
         while(len(tempOrgs) > 0):
             cur = tempOrgs[0]
             # eliminates juveniles from the breeding pool
@@ -102,11 +117,6 @@ class World:
             opOrgs.remove(curOrganism)
             self.organisms.append(child)
 
-    def checkMates(self):
-        for x in self.organisms:
-            print x.details()
-            print x.mhcScore(x.mate)
-            print x.mate.details()
 
     def writeOrganisms(self, string, newLine=False):
         if newLine:
@@ -119,13 +129,6 @@ class World:
             string = "\n"+string
 
         self.paraFile.write(string+"\t")
-
-    def countMHC(self):
-        count = 0
-        for organism in self.organisms:
-            if organism.is_mhc():
-                count += 1
-        return count
 
     def new_year(self, threshold=0.4):
         self.writeOrganisms(str(self.year), True)
@@ -151,7 +154,7 @@ class World:
                 species = organism.parasites[count-1]
                 for psiteCt in range(len(species)):
                     parasite = species[psiteCt]
-                    score = parasite.get_score(organism, count)
+                    score = parasite.get_fitness(organism, count)
                     if score == 0:
                         zeros.append([parasite, count, orgCt])
                     elif score == 1:
@@ -196,7 +199,7 @@ class World:
                     order.append(organism)
             else:
                 for x in range(0, len(order)):
-                    if order[x].parasiteScore() > organism.parasiteScore():
+                    if order[x].fitness() > organism.fitness():
                         order.insert(x, organism)
                         break
                     elif x == len(order) - 1:
