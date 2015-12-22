@@ -1,9 +1,10 @@
 organism_params = {
-    "loci": 3,
+    "loci_length": 3,
     "num_parasites": 6,
-    "species": 6,
+    "num_species": 6,
     "juvenile_period": 13.0,
     "mutation_rate": 0.01
+    "mate_threshold"
 }
 organism_params["death_rate"] = 1.0 / \
     (organism_params['juvenile_period'] + 1)

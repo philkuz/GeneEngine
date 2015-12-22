@@ -8,7 +8,7 @@ class Petri:
         self.parasite_count = 0
         self.organism_count = 0
         self.year = 0
-    def find_mates(self):
+    def matchmaker(self):
         '''
         Traverses the population of organisms and returns
         a list 1 member from each mating pair
@@ -40,34 +40,24 @@ class Petri:
         '''
         reproducing_mates = random.sample(mated, len(mated)*self.fertility_rate)
         for mate in reproducing_mates:
-            mate.reproduce()
+            child = mate.reproduce()
+            if child:
+                self.organisms.append(child)
+    def reaper(self):
+        '''
+        Handles death in the populations
+        '''
+        self.organisms[:] = [organism for organism in self.organisms if not organism.will_die()]
+    def cycle(self):
+        mates = self.matchmaker()
+        self.incubator(mates)
+        self.reaper()
+        for organism in self.organisms:
+            organism.next_cycle()
+        self.year+=1
+
 
     def mating(self, threshold=0.4):
-        tempOrgs = list(self.organisms)
-        opOrgs = []
-        mhcThreshhold = int(threshold * tempOrgs[0].loci_length*tempOrgs[0].num_species)
-        while(len(tempOrgs) > 0):
-            cur = tempOrgs[0]
-            # eliminates juveniles from the breeding pool
-            if not cur.can_mate():
-                opOrgs.append(cur)
-                tempOrgs.remove(cur)
-                continue
-            output = None
-            if cur.is_mhc():
-                highScore = 0
-                # cycles through remaining organisms
-                offset = 0
-                for i in range(1, len(tempOrgs)):
-                    tempOrganism = tempOrgs[i-offset]
-                    # eliminates juveniles from the breeding pool
-                    if not tempOrganism.can_mate():
-                        opOrgs.append(tempOrganism)
-                        tempOrgs.remove(tempOrganism)
-                        offset += 1
-                        continue
-                    # compares score to current high score and saves the
-                    # highest organism; ends loop if it passes threshold.
                     curScore = cur.mhcScore(tempOrganism)
                     if output is None:
                         output = tempOrganism
@@ -76,46 +66,8 @@ class Petri:
                         output = tempOrganism
                     if curScore >= mhcThreshhold:
                         break
-            else:
-                # output is either novel or cur. If it is cur, then
-                # output.can_mate() should be true, and would be handled later
-                if len(tempOrgs) > 1:
-                    output = tempOrgs[random.randint(1, len(tempOrgs)-1)]
-                    while not output.can_mate():
-                        opOrgs.append(output)
-                        tempOrgs.remove(output)
-                        if len(tempOrgs) > 0:
-                            output = None
-                            break
-                        else:
-                            output = tempOrgs[
-                                random.randint(1, len(tempOrgs)-1)
-                            ]
-            opOrgs.append(cur)
-            tempOrgs.remove(cur)
-            if output is not cur and output is not None:
-                cur.mate = output
-                output.mate = cur
-
-                opOrgs.append(output)
-                tempOrgs.remove(output)
         self.organisms = opOrgs[:]
-        for i in range(0, int(len(opOrgs)*Organism.fertility_rate)):
-            if len(opOrgs) == 0:
-                break
-            curOrganism = opOrgs[random.randint(0, len(opOrgs)-1)]
-            quit = False
-            while curOrganism.mate is None and len(opOrgs) > 0:
-                opOrgs.remove(curOrganism)
-                if len(opOrgs) == 0:
-                    quit = True
-                    break
-                curOrganism = opOrgs[random.randint(0, len(opOrgs)-1)]
-            if quit:
-                break
-            child = curOrganism.reproduce(curOrganism.mate)
-            opOrgs.remove(curOrganism)
-            self.organisms.append(child)
+
 
 
     def writeOrganisms(self, string, newLine=False):

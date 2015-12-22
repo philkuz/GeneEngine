@@ -6,15 +6,14 @@ class Organism:
     '''
     Organism class that encompasess all of the Host arguments and methods
     '''
-    loci_length = 3
-    loci_length = 3
-    num_parasites = 6
-    num_species = 6
-    juvenile_period = 13.0
-    death_rate = 1.0/ (juvenile_period+1)
-    fertility_rate = death_rate / ((1-death_rate)**(juvenile_period+1))
-    mutation_rate = 0.01
-    mate_threshold = 0.5
+    loci_length = organism_params['loci_length']
+    num_parasites = organism_params['num_parasites']
+    num_species = organism_params['num_species']
+    juvenile_period = organism_params['juvenile_period']
+    death_rate = organism_params['death_rate']
+    fertility_rate = organism_params['fertility_rate']
+    mutation_rate = organism_params['mutation_rate']
+    mate_threshold = organism_params['mate_threshold']
 
 
     def __init__(self, genotype = None, parasites = None):
@@ -41,7 +40,9 @@ class Organism:
         self.parasites = parasites
         self._mate = None
         self.age = 0
+        self.alive = True
         self.dna = genotype
+        self.fitscores = {}
         if self.dna is None:
             self.new_adult()
 
@@ -121,7 +122,9 @@ class Organism:
             sexual_inherit()
         inherit_parasites()
     def will_birth(self):
-
+        # sd = prob_std(self.fertility_rate)
+        # return random.random() <random.gauss(self.fertility_rate,sd)
+        return random.random() < self.fertility_rate
     def reproduce(self, parent2 = None):
         '''
         Produces offspring based on gene sequence, an optional additional parent's
@@ -131,14 +134,17 @@ class Organism:
         parent2 (Organism) : An optional Organism argument that marks the other
         parent. If this is left out, reproduction is considered asexual.
         '''
-        parents = [self]
-        if parent2:
-            parents.append(parent2)
-        elif self.mate:
-            parents.append(self.mate)
-        child = self.__class__()
-        child.parents = parents
-        return child
+        if self.try_children():
+            parents = [self]
+            if parent2:
+                parents.append(parent2)
+            elif self.mate:
+                parents.append(self.mate)
+            child = self.__class__()
+            child.parents = parents
+            return child
+        else:
+            return False
     def __repr__(self):
         '''
         The string representation of this organism
@@ -174,13 +180,19 @@ class Organism:
             partner_seq = partner.get_genome(i)
             score += sum([1 for x in range(self.loci_length) if host_seq[x] != partner_seq[x]])
         return score
-    #parasite scores
     def fitness(self):
-        score = 0
-        for i,specie in enumerate(self.parasites):
-            for parasite in specie:
-                score += parasite.get_fitness(self, i)
-        return 1 - score/self.parasite_count()*self.loci_length
+        '''
+        Calculates percent fitness based on parasite fitness
+        '''
+        if self.age in self.fitscores:
+            return self.fitscores[self.age]
+        else:
+            score = 0
+            for specie in self.parasites:
+                score += sum([parasite.fitness() for parasite in specie])
+            score = 1 - score / self.parasite_count()
+            self.fitscores[self.age] = score
+            return score
     @property
     def mate(self):
         if self._mate:
@@ -199,7 +211,7 @@ class Organism:
     def parasite_count(self):
         lens  = [len(specie) for specie in self.parasites]
         return sum(lens)
-    def kill_parasite(self, parasite, species):
+    def kill_parasite(self, parasite, species = None):
         if not species:
             for specie in self.parasites:
                 if parasite in specie:
@@ -207,9 +219,6 @@ class Organism:
                     break
         else:
             self.parasites[species].remove(parasite)
-    '''
-    method to be overwritten
-    '''
     def get_genome(self, index):
         first = index*self.loci_length
         return genome[first:first+self.loci_length]
@@ -222,9 +231,28 @@ class Organism:
     def try_children(self):
         if random.random() < self.fertility_rate and self.can_mate:
             self.reproduce()
-    def new_year(self):
+    def death_chance(self):
+        m = 2 * (1 - self.death_rate)
+        b = 1 / m
+        return (1 - self.fitness())* m + b
+    def will_die(self):
+        '''
+        Should only be called when the organism is removed from the population
+        AKA true death
+        '''
+        self.alive = random.random() < self.death_chance()
+        return self.alive
+    def immunesystem(self):
+        '''
+        Handles parasite death
+        '''
+        for specie in self.parasites:
+            specie[:] = [parasite for parasite in specie if not parasite.will_die()]
+
+    def next_cycle(self):
+        self.immunesystem()
         self.parasite_increment()
-        self.try_children()
+        # self.try_children()
         self.age += 1
         # #parasite reproduction handling
         # for specie in range(0,len(self.parasites)):
